@@ -14,7 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      arguments: {
+        Row: {
+          ai_analysis: string | null
+          ai_score: number | null
+          claim: string
+          created_at: string
+          evidence: string
+          id: string
+          rebuttal: string
+          topic: string
+          user_id: string
+          warrant: string
+        }
+        Insert: {
+          ai_analysis?: string | null
+          ai_score?: number | null
+          claim: string
+          created_at?: string
+          evidence: string
+          id?: string
+          rebuttal: string
+          topic: string
+          user_id: string
+          warrant: string
+        }
+        Update: {
+          ai_analysis?: string | null
+          ai_score?: number | null
+          claim?: string
+          created_at?: string
+          evidence?: string
+          id?: string
+          rebuttal?: string
+          topic?: string
+          user_id?: string
+          warrant?: string
+        }
+        Relationships: []
+      }
+      debates: {
+        Row: {
+          created_at: string
+          id: string
+          score_awarded: number
+          side: string
+          strength_user: number
+          topic: string
+          transcript: Json
+          updated_at: string
+          user_id: string
+          verdict: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          score_awarded?: number
+          side: string
+          strength_user?: number
+          topic: string
+          transcript?: Json
+          updated_at?: string
+          user_id: string
+          verdict?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          score_awarded?: number
+          side?: string
+          strength_user?: number
+          topic?: string
+          transcript?: Json
+          updated_at?: string
+          user_id?: string
+          verdict?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_emoji: string
+          best_streak: number
+          created_at: string
+          current_streak: number
+          display_name: string
+          id: string
+          rank_index: number
+          total_score: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_emoji?: string
+          best_streak?: number
+          created_at?: string
+          current_streak?: number
+          display_name?: string
+          id: string
+          rank_index?: number
+          total_score?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_emoji?: string
+          best_streak?: number
+          created_at?: string
+          current_streak?: number
+          display_name?: string
+          id?: string
+          rank_index?: number
+          total_score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          category: string
+          correct: number
+          created_at: string
+          id: string
+          score_awarded: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          category: string
+          correct?: number
+          created_at?: string
+          id?: string
+          score_awarded?: number
+          total?: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          correct?: number
+          created_at?: string
+          id?: string
+          score_awarded?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
