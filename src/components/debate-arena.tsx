@@ -103,11 +103,11 @@ export function DebateArena() {
           user_id: user.id,
           topic,
           side,
-          transcript: transcript as unknown as object[],
+          transcript: JSON.parse(JSON.stringify(transcript)),
           strength_user: r.result.user_strength,
           verdict: r.result.verdict,
           score_awarded: r.result.score_awarded,
-        });
+        } as never);
         await awardPoints(user.id, r.result.score_awarded, profile.total_score, profile.current_streak);
         await refreshProfile(user.id);
         toast.success(`+${r.result.score_awarded} pts earned!`);
