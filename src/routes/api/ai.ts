@@ -193,10 +193,15 @@ export const Route = createFileRoute("/api/ai")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY;
-        if (!apiKey) {
-          return jsonResponse({ error: "AI is not configured. Missing LOVABLE_API_KEY." }, 500);
+        const lovableKey = process.env.LOVABLE_API_KEY;
+        const geminiKey = process.env.GEMINI_API_KEY;
+        if (!lovableKey && !geminiKey) {
+          return jsonResponse({ error: "AI is not configured. Missing LOVABLE_API_KEY or GEMINI_API_KEY." }, 500);
         }
+        const useGemini = !!geminiKey;
+        const apiKey = useGemini ? geminiKey! : lovableKey!;
+        const gatewayUrl = useGemini ? GEMINI_GATEWAY_URL : LOVABLE_GATEWAY_URL;
+        const model = useGemini ? GEMINI_MODEL : LOVABLE_MODEL;
 
         let body: AIBody;
         try {
