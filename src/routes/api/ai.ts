@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const DEFAULT_MODEL = "google/gemini-2.5-flash";
+const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_GATEWAY_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const LOVABLE_MODEL = "google/gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 interface AIBody {
   task:
@@ -191,10 +193,15 @@ export const Route = createFileRoute("/api/ai")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY;
-        if (!apiKey) {
-          return jsonResponse({ error: "AI is not configured. Missing LOVABLE_API_KEY." }, 500);
+        const lovableKey = process.env.LOVABLE_API_KEY;
+        const geminiKey = process.env.GEMINI_API_KEY;
+        if (!lovableKey && !geminiKey) {
+          return jsonResponse({ error: "AI is not configured. Missing LOVABLE_API_KEY or GEMINI_API_KEY." }, 500);
         }
+        const useGemini = !!geminiKey;
+        const apiKey = useGemini ? geminiKey! : lovableKey!;
+        const gatewayUrl = useGemini ? GEMINI_GATEWAY_URL : LOVABLE_GATEWAY_URL;
+        const model = useGemini ? GEMINI_MODEL : LOVABLE_MODEL;
 
         let body: AIBody;
         try {
@@ -213,12 +220,12 @@ export const Route = createFileRoute("/api/ai")({
         }
 
         const requestBody: Record<string, unknown> = {
-          model: DEFAULT_MODEL,
+          model,
           ...(tool ?? chat ?? {}),
         };
 
         try {
-          const r = await fetch(GATEWAY_URL, {
+          const r = await fetch(gatewayUrl, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${apiKey}`,
