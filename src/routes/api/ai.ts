@@ -220,12 +220,12 @@ export const Route = createFileRoute("/api/ai")({
         }
 
         const requestBody: Record<string, unknown> = {
-          model: DEFAULT_MODEL,
+          model,
           ...(tool ?? chat ?? {}),
         };
 
         try {
-          const r = await fetch(GATEWAY_URL, {
+          const r = await fetch(gatewayUrl, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${apiKey}`,
