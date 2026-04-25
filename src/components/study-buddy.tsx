@@ -1,17 +1,46 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { callAI } from "@/lib/ai-client";
+import { useLanguage } from "@/lib/language";
 
 interface ChatMsg { role: "user" | "ai"; content: string }
 
+const GREETINGS: Record<string, string> = {
+  en: "Hey! I'm Study Buddy 🦉 — ask me to explain concepts, drill quiz topics, or coach your debate.",
+  es: "¡Hola! Soy Study Buddy 🦉 — pídeme explicar conceptos, repasar temas de quiz o entrenar tu debate.",
+  fr: "Salut ! Je suis Study Buddy 🦉 — demande-moi d'expliquer des concepts, de réviser des quiz ou de coacher ton débat.",
+  de: "Hi! Ich bin Study Buddy 🦉 — frag mich nach Konzepten, Quiz-Themen oder Debatten-Coaching.",
+  it: "Ciao! Sono Study Buddy 🦉 — chiedimi di spiegare concetti, fare quiz o allenare il tuo dibattito.",
+  pt: "Olá! Sou o Study Buddy 🦉 — peça-me para explicar conceitos, treinar quizzes ou ensaiar debates.",
+  nl: "Hé! Ik ben Study Buddy 🦉 — vraag me concepten uit te leggen, quizvragen te oefenen of je debat te coachen.",
+  pl: "Cześć! Jestem Study Buddy 🦉 — poproś mnie o wyjaśnienie pojęć, ćwiczenie quizów lub trening debaty.",
+  tr: "Selam! Ben Study Buddy 🦉 — kavram açıklamamı, quiz çalışmamı veya münazara koçluğunu iste.",
+  ar: "مرحبًا! أنا Study Buddy 🦉 — اطلب مني شرح المفاهيم أو التدرب على الأسئلة أو تدريبك على المناظرة.",
+  hi: "नमस्ते! मैं Study Buddy 🦉 हूँ — अवधारणाएँ समझाने, क्विज़ अभ्यास या बहस की कोचिंग के लिए पूछें।",
+  bn: "হাই! আমি Study Buddy 🦉 — ধারণা ব্যাখ্যা, কুইজ অনুশীলন বা বিতর্ক কোচিংয়ের জন্য জিজ্ঞাসা করো।",
+  ur: "ہائے! میں Study Buddy 🦉 ہوں — تصورات کی وضاحت، کوئز کی مشق یا مباحثے کی کوچنگ کے لیے پوچھیں۔",
+  zh: "嗨！我是 Study Buddy 🦉 — 让我讲解概念、刷题或为你的辩论做指导。",
+  ja: "やあ！Study Buddy 🦉 だよ — 概念の解説、クイズ対策、ディベートのコーチングを頼んでね。",
+  ko: "안녕! 나는 Study Buddy 🦉 — 개념 설명, 퀴즈 연습, 토론 코칭을 부탁해 봐.",
+  ru: "Привет! Я Study Buddy 🦉 — попроси объяснить концепции, прокачать квизы или потренировать дебаты.",
+  id: "Hai! Aku Study Buddy 🦉 — minta aku menjelaskan konsep, latihan kuis, atau melatih debatmu.",
+  vi: "Chào! Mình là Study Buddy 🦉 — hãy nhờ mình giải thích khái niệm, luyện quiz hay huấn luyện tranh luận.",
+  sw: "Habari! Mimi ni Study Buddy 🦉 — niambie nieleze dhana, nikufunze maswali au nikufundishe mjadala.",
+};
+
 export function StudyBuddy() {
+  const { language } = useLanguage();
+  const greeting = GREETINGS[language.code] ?? GREETINGS.en;
   const [open, setOpen] = useState(false);
-  const [msgs, setMsgs] = useState<ChatMsg[]>([
-    { role: "ai", content: "Hey! I'm Study Buddy 🦉 — ask me to explain concepts, drill quiz topics, or coach your debate." },
-  ]);
+  const [msgs, setMsgs] = useState<ChatMsg[]>([{ role: "ai", content: greeting }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Refresh greeting when language changes (only if user hasn't chatted yet)
+  useEffect(() => {
+    setMsgs((prev) => (prev.length <= 1 ? [{ role: "ai", content: greeting }] : prev));
+  }, [greeting]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
