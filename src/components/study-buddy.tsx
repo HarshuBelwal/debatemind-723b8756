@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 import { callAI } from "@/lib/ai-client";
 import { useLanguage } from "@/lib/language";
 
