@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { rankFromScore } from "@/lib/ranks";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function SiteHeader() {
   const { user, profile, signOut } = useAuth();
@@ -33,6 +34,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher />
           {user && (
             <>
               <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-gradient-gold px-3 py-1 text-xs font-bold text-ink shadow-card">
