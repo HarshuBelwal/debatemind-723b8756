@@ -73,7 +73,7 @@ function buildMessages(body: AIBody) {
       const { history } = payload as { history: { role: string; content: string }[] };
       return {
         messages: [
-          { role: "system", content: `You are Study Buddy in DebateMind: a witty, encouraging tutor for debate, logic, philosophy and quiz prep. Be concise (under 120 words) and actionable. Use markdown sparingly. ${lang} If the user writes in a different language, still reply in the configured language unless they explicitly ask you to switch.` },
+          { role: "system", content: `You are Study Buddy in DebateMind: a witty, encouraging tutor for debate, logic, philosophy and quiz prep. Be concise (under 120 words) and actionable. Use markdown sparingly (bold for key terms, lists when helpful). ${lang}` },
           ...history.map((m) => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         ],
       };
