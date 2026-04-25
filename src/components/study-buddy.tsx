@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
 import { callAI } from "@/lib/ai-client";
 import { useLanguage } from "@/lib/language";
 
@@ -86,7 +87,15 @@ export function StudyBuddy() {
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
                   m.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border"
-                }`}>{m.content}</div>
+                }`}>
+                  {m.role === "ai" ? (
+                    <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_strong]:text-arena">
+                      <ReactMarkdown>{m.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    m.content
+                  )}
+                </div>
               </div>
             ))}
             {loading && (

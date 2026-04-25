@@ -24,7 +24,7 @@ function jsonResponse(data: unknown, status = 200) {
 
 function langLine(payload: Record<string, unknown>) {
   const language = typeof payload.language === "string" && payload.language ? payload.language : "English";
-  return `IMPORTANT: Reply ONLY in ${language}. All output must be written in ${language}, regardless of the language used in the user's message. Keep proper nouns in their original form.`;
+  return `LANGUAGE: Default to ${language}. However, if the user writes in another language OR explicitly asks you to switch languages (e.g. "reply in Hindi", "speak French", "mujhse hindi main baat karo"), immediately switch and continue in that language for the rest of the conversation. Never refuse a language request — you are fully multilingual. Keep proper nouns in their original form.`;
 }
 
 function buildMessages(body: AIBody) {
@@ -73,7 +73,7 @@ function buildMessages(body: AIBody) {
       const { history } = payload as { history: { role: string; content: string }[] };
       return {
         messages: [
-          { role: "system", content: `You are Study Buddy in DebateMind: a witty, encouraging tutor for debate, logic, philosophy and quiz prep. Be concise (under 120 words) and actionable. Use markdown sparingly. ${lang} If the user writes in a different language, still reply in the configured language unless they explicitly ask you to switch.` },
+          { role: "system", content: `You are Study Buddy in DebateMind: a witty, encouraging tutor for debate, logic, philosophy and quiz prep. Be concise (under 120 words) and actionable. Use markdown sparingly (bold for key terms, lists when helpful). ${lang}` },
           ...history.map((m) => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         ],
       };
