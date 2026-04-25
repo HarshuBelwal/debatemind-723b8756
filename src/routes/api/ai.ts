@@ -22,8 +22,14 @@ function jsonResponse(data: unknown, status = 200) {
   });
 }
 
+function langLine(payload: Record<string, unknown>) {
+  const language = typeof payload.language === "string" && payload.language ? payload.language : "English";
+  return `IMPORTANT: Reply ONLY in ${language}. All output must be written in ${language}, regardless of the language used in the user's message. Keep proper nouns in their original form.`;
+}
+
 function buildMessages(body: AIBody) {
   const { task, payload } = body;
+  const lang = langLine(payload);
 
   switch (task) {
     case "debate_reply": {
@@ -36,7 +42,7 @@ function buildMessages(body: AIBody) {
         messages: [
           {
             role: "system",
-            content: `You are a sharp, fair debate opponent in DebateMind. Topic: "${topic}". The user is arguing ${side.toUpperCase()}. You must argue ${aiSide}. Keep replies under 110 words. Use clear reasoning, one strong evidence point or example, and end with a pointed challenge or question. Never concede unless they make a truly devastating point. No filler.`,
+            content: `You are a sharp, fair debate opponent in DebateMind. Topic: "${topic}". The user is arguing ${side.toUpperCase()}. You must argue ${aiSide}. Keep replies under 110 words. Use clear reasoning, one strong evidence point or example, and end with a pointed challenge or question. Never concede unless they make a truly devastating point. No filler. ${lang}`,
           },
           ...transcript.map((m) => ({
             role: m.role === "ai" ? "assistant" : "user",
@@ -49,7 +55,7 @@ function buildMessages(body: AIBody) {
       const { topic, lastUserArgument } = payload as { topic: string; lastUserArgument: string };
       return {
         messages: [
-          { role: "system", content: `You are a debate coach. Provide ONE devastating counter-argument to the user's last point on the topic "${topic}". Under 90 words. Sharp, structured, evidence-based.` },
+          { role: "system", content: `You are a debate coach. Provide ONE devastating counter-argument to the user's last point on the topic "${topic}". Under 90 words. Sharp, structured, evidence-based. ${lang}` },
           { role: "user", content: lastUserArgument },
         ],
       };
@@ -58,7 +64,7 @@ function buildMessages(body: AIBody) {
       const { topic, side } = payload as { topic: string; side: string };
       return {
         messages: [
-          { role: "system", content: `You are a debate coach. Give the user ONE concise tactical hint (under 60 words) for arguing ${side} on: "${topic}". Suggest an angle, framework, or evidence type they could use. No preamble.` },
+          { role: "system", content: `You are a debate coach. Give the user ONE concise tactical hint (under 60 words) for arguing ${side} on: "${topic}". Suggest an angle, framework, or evidence type they could use. No preamble. ${lang}` },
           { role: "user", content: "Give me a hint." },
         ],
       };
@@ -67,7 +73,7 @@ function buildMessages(body: AIBody) {
       const { history } = payload as { history: { role: string; content: string }[] };
       return {
         messages: [
-          { role: "system", content: "You are Study Buddy in DebateMind: a witty, encouraging tutor for debate, logic, philosophy and quiz prep. Be concise (under 120 words) and actionable. Use markdown sparingly." },
+          { role: "system", content: `You are Study Buddy in DebateMind: a witty, encouraging tutor for debate, logic, philosophy and quiz prep. Be concise (under 120 words) and actionable. Use markdown sparingly. ${lang} If the user writes in a different language, still reply in the configured language unless they explicitly ask you to switch.` },
           ...history.map((m) => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content })),
         ],
       };
@@ -79,12 +85,13 @@ function buildMessages(body: AIBody) {
 
 function buildToolCall(body: AIBody) {
   const { task, payload } = body;
+  const lang = langLine(payload);
 
   if (task === "quiz_generate") {
     const { category, count } = payload as { category: string; count: number };
     return {
       messages: [
-        { role: "system", content: `Generate ${count} hard but fair multiple-choice quiz questions in the "${category}" category. 4 choices each, exactly one correct, plus a 1-sentence explanation. Vary difficulty.` },
+        { role: "system", content: `Generate ${count} hard but fair multiple-choice quiz questions in the "${category}" category. 4 choices each, exactly one correct, plus a 1-sentence explanation. Vary difficulty. ${lang} The "question", every entry in "choices", and "explanation" MUST all be written in the requested language.` },
         { role: "user", content: `Generate ${count} ${category} questions.` },
       ],
       tools: [{
@@ -127,7 +134,7 @@ function buildToolCall(body: AIBody) {
     const convo = transcript.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
     return {
       messages: [
-        { role: "system", content: "You are an impartial debate judge. Score fairly based on logic, evidence, rhetoric, and rebuttal quality." },
+        { role: "system", content: `You are an impartial debate judge. Score fairly based on logic, evidence, rhetoric, and rebuttal quality. ${lang} The "verdict" and every "highlights" entry must be written in the requested language.` },
         { role: "user", content: `Topic: "${topic}"\nUser side: ${side}\n\nTranscript:\n${convo}\n\nJudge this debate.` },
       ],
       tools: [{
@@ -159,7 +166,7 @@ function buildToolCall(body: AIBody) {
     };
     return {
       messages: [
-        { role: "system", content: "You are an expert in the Toulmin model of argumentation. Critique fairly and constructively." },
+        { role: "system", content: `You are an expert in the Toulmin model of argumentation. Critique fairly and constructively. ${lang} All "strengths", "weaknesses" entries and the "improvement" text must be written in the requested language.` },
         { role: "user", content: `Topic: ${topic}\n\nClaim: ${claim}\nEvidence: ${evidence}\nWarrant: ${warrant}\nRebuttal: ${rebuttal}\n\nAnalyze this argument.` },
       ],
       tools: [{
