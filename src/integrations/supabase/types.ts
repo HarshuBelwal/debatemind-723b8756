@@ -225,7 +225,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      award_points: {
+        Args: { p_points: number }
+        Returns: {
+          best_streak: number
+          current_streak: number
+          total_score: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
