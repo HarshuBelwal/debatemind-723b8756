@@ -204,6 +204,25 @@ export const Route = createFileRoute("/api/ai")({
           return jsonResponse({ error: "AI is not configured. Missing LOVABLE_API_KEY." }, 500);
         }
 
+        // Authenticate the caller — prevent anonymous credit drain.
+        const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+        const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!token) {
+          return jsonResponse({ error: "Unauthorized" }, 401);
+        }
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+          return jsonResponse({ error: "Auth is not configured." }, 500);
+        }
+        const sb = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const { data: claimsData, error: claimsErr } = await sb.auth.getClaims(token);
+        if (claimsErr || !claimsData?.claims?.sub) {
+          return jsonResponse({ error: "Unauthorized" }, 401);
+        }
+
         let body: AIBody;
         try {
           body = (await request.json()) as AIBody;
