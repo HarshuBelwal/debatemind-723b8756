@@ -52,20 +52,18 @@ export function useAuth() {
   return { user, profile, loading, signOut, refreshProfile };
 }
 
-export async function awardPoints(userId: string, points: number, currentScore: number, currentStreak: number) {
-  const newScore = currentScore + points;
-  const newStreak = points > 0 ? currentStreak + 1 : 0;
-  const { data: profile } = await supabase.from("profiles").select("best_streak").eq("id", userId).single();
-  const bestStreak = Math.max(profile?.best_streak ?? 0, newStreak);
-
-  await supabase
-    .from("profiles")
-    .update({
-      total_score: newScore,
-      current_streak: newStreak,
-      best_streak: bestStreak,
-    })
-    .eq("id", userId);
-
-  return { total_score: newScore, current_streak: newStreak, best_streak: bestStreak };
+export async function awardPoints(_userId: string, points: number, _currentScore: number, _currentStreak: number) {
+  // Server-side RPC clamps points (0-100) and increments atomically using auth.uid().
+  // Client cannot tamper with score values.
+  const { data, error } = await supabase.rpc("award_points", { p_points: Math.max(0, Math.floor(points)) });
+  if (error) {
+    console.error("award_points failed", error);
+    throw error;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    total_score: row?.total_score ?? 0,
+    current_streak: row?.current_streak ?? 0,
+    best_streak: row?.best_streak ?? 0,
+  };
 }
