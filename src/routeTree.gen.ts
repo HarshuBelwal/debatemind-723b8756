@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TopicsRouteImport } from './routes/topics'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RanksRouteImport } from './routes/ranks'
 import { Route as QuizRouteImport } from './routes/quiz'
 import { Route as BuilderRouteImport } from './routes/builder'
@@ -20,6 +21,11 @@ import { Route as ApiAiRouteImport } from './routes/api/ai'
 const TopicsRoute = TopicsRouteImport.update({
   id: '/topics',
   path: '/topics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RanksRoute = RanksRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/builder': typeof BuilderRoute
   '/quiz': typeof QuizRoute
   '/ranks': typeof RanksRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/topics': typeof TopicsRoute
   '/api/ai': typeof ApiAiRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/builder': typeof BuilderRoute
   '/quiz': typeof QuizRoute
   '/ranks': typeof RanksRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/topics': typeof TopicsRoute
   '/api/ai': typeof ApiAiRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/builder': typeof BuilderRoute
   '/quiz': typeof QuizRoute
   '/ranks': typeof RanksRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/topics': typeof TopicsRoute
   '/api/ai': typeof ApiAiRoute
 }
@@ -89,10 +98,19 @@ export interface FileRouteTypes {
     | '/builder'
     | '/quiz'
     | '/ranks'
+    | '/reset-password'
     | '/topics'
     | '/api/ai'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/builder' | '/quiz' | '/ranks' | '/topics' | '/api/ai'
+  to:
+    | '/'
+    | '/auth'
+    | '/builder'
+    | '/quiz'
+    | '/ranks'
+    | '/reset-password'
+    | '/topics'
+    | '/api/ai'
   id:
     | '__root__'
     | '/'
@@ -100,6 +118,7 @@ export interface FileRouteTypes {
     | '/builder'
     | '/quiz'
     | '/ranks'
+    | '/reset-password'
     | '/topics'
     | '/api/ai'
   fileRoutesById: FileRoutesById
@@ -110,6 +129,7 @@ export interface RootRouteChildren {
   BuilderRoute: typeof BuilderRoute
   QuizRoute: typeof QuizRoute
   RanksRoute: typeof RanksRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TopicsRoute: typeof TopicsRoute
   ApiAiRoute: typeof ApiAiRoute
 }
@@ -121,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/topics'
       fullPath: '/topics'
       preLoaderRoute: typeof TopicsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ranks': {
@@ -174,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   BuilderRoute: BuilderRoute,
   QuizRoute: QuizRoute,
   RanksRoute: RanksRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TopicsRoute: TopicsRoute,
   ApiAiRoute: ApiAiRoute,
 }
