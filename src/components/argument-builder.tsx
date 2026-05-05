@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { FeatureCard } from "./feature-card";
 import type { ArgumentAnalysis } from "@/lib/types";
