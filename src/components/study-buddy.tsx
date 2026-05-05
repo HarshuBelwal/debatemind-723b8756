@@ -116,6 +116,7 @@ export function StudyBuddy() {
             )}
           </div>
           <div className="flex gap-2 border-t border-border p-2">
+            <MicButton onTranscript={(t) => setInput((v) => (v ? v + " " : "") + t)} />
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
