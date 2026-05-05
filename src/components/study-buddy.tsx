@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { callAI } from "@/lib/ai-client";
 import { useLanguage } from "@/lib/language";
+import { MicButton } from "./mic-button";
+import { speak, stopSpeaking } from "@/lib/voice";
 
 interface ChatMsg { role: "user" | "ai"; content: string }
 
