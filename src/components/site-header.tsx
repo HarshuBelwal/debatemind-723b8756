@@ -1,7 +1,10 @@
+import { useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { rankFromScore } from "@/lib/ranks";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   const { user, profile, signOut } = useAuth();
