@@ -162,6 +162,7 @@ export type Database = {
           current_streak: number
           display_name: string
           id: string
+          last_points_awarded_at: string | null
           rank_index: number
           total_score: number
           updated_at: string
@@ -173,6 +174,7 @@ export type Database = {
           current_streak?: number
           display_name?: string
           id: string
+          last_points_awarded_at?: string | null
           rank_index?: number
           total_score?: number
           updated_at?: string
@@ -184,6 +186,7 @@ export type Database = {
           current_streak?: number
           display_name?: string
           id?: string
+          last_points_awarded_at?: string | null
           rank_index?: number
           total_score?: number
           updated_at?: string
