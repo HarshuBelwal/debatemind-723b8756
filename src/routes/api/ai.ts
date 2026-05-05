@@ -285,7 +285,7 @@ export const Route = createFileRoute("/api/ai")({
           return jsonResponse({ text });
         } catch (e) {
           console.error("AI handler error", e);
-          return jsonResponse({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
+          return jsonResponse({ error: "An unexpected error occurred. Please try again." }, 500);
         }
       },
     },
