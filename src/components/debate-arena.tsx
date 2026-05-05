@@ -172,7 +172,16 @@ export function DebateArena() {
                     : m.role === "ai" ? "bg-card border border-arena/30"
                     : "bg-secondary text-muted-foreground italic text-xs"
                   }`}>
-                    {m.role === "ai" && <div className="text-[10px] uppercase tracking-widest text-arena mb-1 font-arena">🤖 AI</div>}
+                    {m.role === "ai" && (
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-[10px] uppercase tracking-widest text-arena font-arena">🤖 AI</div>
+                        <button
+                          onClick={() => speak(m.content).catch(() => toast.error("Voice failed"))}
+                          className="text-[10px] text-muted-foreground hover:text-arena transition"
+                          title="Listen"
+                        >🔊</button>
+                      </div>
+                    )}
                     {m.content}
                   </div>
                 </div>
