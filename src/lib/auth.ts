@@ -6,6 +6,7 @@ export interface Profile {
   id: string;
   display_name: string;
   avatar_emoji: string;
+  avatar_url: string | null;
   total_score: number;
   current_streak: number;
   best_streak: number;
