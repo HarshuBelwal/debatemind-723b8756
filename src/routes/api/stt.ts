@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/stt")({
 
         try {
           const apiForm = new FormData();
-          apiForm.append("file", file as Blob, "audio.webm");
+          apiForm.append("file", file, "audio.webm");
           apiForm.append("model_id", "scribe_v2");
 
           const r = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
