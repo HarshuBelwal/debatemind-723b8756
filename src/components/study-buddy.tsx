@@ -91,9 +91,16 @@ export function StudyBuddy() {
                   m.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border"
                 }`}>
                   {m.role === "ai" ? (
-                    <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_strong]:text-arena">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_strong]:text-arena">
+                        <ReactMarkdown>{m.content}</ReactMarkdown>
+                      </div>
+                      <button
+                        onClick={() => speak(m.content).catch(() => toast.error("Voice failed"))}
+                        className="mt-1 text-[10px] text-muted-foreground hover:text-arena transition"
+                        title="Listen"
+                      >🔊 Listen</button>
+                    </>
                   ) : (
                     m.content
                   )}
