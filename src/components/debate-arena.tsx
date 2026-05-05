@@ -60,6 +60,7 @@ export function DebateArena() {
         transcript: next.filter(m => m.role !== "system").map(m => ({ role: m.role, content: m.content })),
       });
       setTranscript(t => [...t, { role: "ai", content: r.text, ts: Date.now() }]);
+      if (autoSpeak) speak(r.text).catch(() => {});
       // Drift strength a bit toward middle to keep the user engaged
       setStrength(s => Math.max(15, Math.min(85, s + (Math.random() * 20 - 8))));
     } catch (e) {
