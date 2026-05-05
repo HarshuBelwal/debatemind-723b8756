@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import { callAI } from "@/lib/ai-client";
 import { useLanguage } from "@/lib/language";
+import { MicButton } from "./mic-button";
+import { speak } from "@/lib/voice";
 
 interface ChatMsg { role: "user" | "ai"; content: string }
 
@@ -89,9 +91,16 @@ export function StudyBuddy() {
                   m.role === "user" ? "bg-primary text-primary-foreground" : "bg-card border border-border"
                 }`}>
                   {m.role === "ai" ? (
-                    <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_strong]:text-arena">
-                      <ReactMarkdown>{m.content}</ReactMarkdown>
-                    </div>
+                    <>
+                      <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_strong]:text-arena">
+                        <ReactMarkdown>{m.content}</ReactMarkdown>
+                      </div>
+                      <button
+                        onClick={() => speak(m.content).catch(() => toast.error("Voice failed"))}
+                        className="mt-1 text-[10px] text-muted-foreground hover:text-arena transition"
+                        title="Listen"
+                      >🔊 Listen</button>
+                    </>
                   ) : (
                     m.content
                   )}
@@ -107,6 +116,7 @@ export function StudyBuddy() {
             )}
           </div>
           <div className="flex gap-2 border-t border-border p-2">
+            <MicButton onTranscript={(t) => setInput((v) => (v ? v + " " : "") + t)} />
             <input
               value={input}
               onChange={e => setInput(e.target.value)}

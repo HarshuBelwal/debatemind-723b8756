@@ -1,14 +1,38 @@
+import { useRef } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { rankFromScore } from "@/lib/ranks";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const score = profile?.total_score ?? 0;
   const streak = profile?.current_streak ?? 0;
   const rank = rankFromScore(score);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 3 * 1024 * 1024) return toast.error("Image must be under 3MB");
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      const { error: upErr } = await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", user.id);
+      if (upErr) throw upErr;
+      await refreshProfile(user.id);
+      toast.success("Avatar updated");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    }
+  }
+
 
   return (
     <header className="sticky top-0 z-40 glass border-b border-border">
@@ -37,6 +61,18 @@ export function SiteHeader() {
           <LanguageSwitcher />
           {user && (
             <>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+              <button
+                onClick={() => fileRef.current?.click()}
+                title="Change avatar"
+                className="grid h-9 w-9 place-items-center rounded-full bg-secondary border border-border overflow-hidden hover:border-primary/60 transition"
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-base">{profile?.avatar_emoji ?? "🧑‍🎓"}</span>
+                )}
+              </button>
               <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-gradient-gold px-3 py-1 text-xs font-bold text-ink shadow-card">
                 <span>{rank.emoji}</span>
                 <span>{score} pts</span>

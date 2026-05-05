@@ -6,6 +6,8 @@ import type { DebateMessage, DebateSide, DebateJudgment } from "@/lib/types";
 import { callAI } from "@/lib/ai-client";
 import { useAuth, awardPoints } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { MicButton } from "./mic-button";
+import { speak, stopSpeaking } from "@/lib/voice";
 
 export function DebateArena() {
   const { user, profile, refreshProfile } = useAuth();
@@ -18,6 +20,7 @@ export function DebateArena() {
   const [judging, setJudging] = useState(false);
   const [verdict, setVerdict] = useState<DebateJudgment | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [autoSpeak, setAutoSpeak] = useState(false);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -57,6 +60,7 @@ export function DebateArena() {
         transcript: next.filter(m => m.role !== "system").map(m => ({ role: m.role, content: m.content })),
       });
       setTranscript(t => [...t, { role: "ai", content: r.text, ts: Date.now() }]);
+      if (autoSpeak) speak(r.text).catch(() => {});
       // Drift strength a bit toward middle to keep the user engaged
       setStrength(s => Math.max(15, Math.min(85, s + (Math.random() * 20 - 8))));
     } catch (e) {
@@ -168,7 +172,16 @@ export function DebateArena() {
                     : m.role === "ai" ? "bg-card border border-arena/30"
                     : "bg-secondary text-muted-foreground italic text-xs"
                   }`}>
-                    {m.role === "ai" && <div className="text-[10px] uppercase tracking-widest text-arena mb-1 font-arena">🤖 AI</div>}
+                    {m.role === "ai" && (
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="text-[10px] uppercase tracking-widest text-arena font-arena">🤖 AI</div>
+                        <button
+                          onClick={() => speak(m.content).catch(() => toast.error("Voice failed"))}
+                          className="text-[10px] text-muted-foreground hover:text-arena transition"
+                          title="Listen"
+                        >🔊</button>
+                      </div>
+                    )}
                     {m.content}
                   </div>
                 </div>
@@ -207,11 +220,12 @@ export function DebateArena() {
             </div>
 
             <div className="flex gap-2">
+              <MicButton onTranscript={(t) => setInput((v) => (v ? v + " " : "") + t)} />
               <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
-                placeholder="Make your argument… (Enter to send)"
+                placeholder="Make your argument… (🎤 to speak, Enter to send)"
                 rows={2}
                 className="flex-1 resize-none rounded-xl border border-border bg-background/60 px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
                 disabled={loading || judging}
@@ -225,12 +239,21 @@ export function DebateArena() {
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button onClick={counter} disabled={loading} className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-arena/50 transition disabled:opacity-50">🔄 Counter me</button>
               <button onClick={hint} disabled={loading} className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-primary/50 transition disabled:opacity-50">💡 Get a hint</button>
               <button onClick={judge} disabled={judging} className="rounded-md bg-gradient-gold px-3 py-1.5 text-xs font-bold text-ink shadow-card hover:scale-[1.03] transition disabled:opacity-50">
                 {judging ? "Judging…" : "📊 Judge debate"}
               </button>
+              <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={autoSpeak}
+                  onChange={(e) => { setAutoSpeak(e.target.checked); if (!e.target.checked) stopSpeaking(); }}
+                  className="accent-arena"
+                />
+                🔊 Auto-speak
+              </label>
             </div>
           </>
         )}

@@ -22,6 +22,7 @@ export type Database = {
           created_at: string
           evidence: string
           id: string
+          image_url: string | null
           rebuttal: string
           topic: string
           user_id: string
@@ -34,6 +35,7 @@ export type Database = {
           created_at?: string
           evidence: string
           id?: string
+          image_url?: string | null
           rebuttal: string
           topic: string
           user_id: string
@@ -46,6 +48,7 @@ export type Database = {
           created_at?: string
           evidence?: string
           id?: string
+          image_url?: string | null
           rebuttal?: string
           topic?: string
           user_id?: string
@@ -157,6 +160,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_emoji: string
+          avatar_url: string | null
           best_streak: number
           created_at: string
           current_streak: number
@@ -169,6 +173,7 @@ export type Database = {
         }
         Insert: {
           avatar_emoji?: string
+          avatar_url?: string | null
           best_streak?: number
           created_at?: string
           current_streak?: number
@@ -181,6 +186,7 @@ export type Database = {
         }
         Update: {
           avatar_emoji?: string
+          avatar_url?: string | null
           best_streak?: number
           created_at?: string
           current_streak?: number

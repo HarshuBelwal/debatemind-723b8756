@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { FeatureCard } from "./feature-card";
 import type { ArgumentAnalysis } from "@/lib/types";
@@ -21,6 +21,29 @@ export function ArgumentBuilder() {
   const [vals, setVals] = useState<Record<FieldKey, string>>({ claim: "", evidence: "", warrant: "", rebuttal: "" });
   const [analysis, setAnalysis] = useState<ArgumentAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error("Image must be under 5MB");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("argument-images").upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = supabase.storage.from("argument-images").getPublicUrl(path);
+      setImageUrl(data.publicUrl);
+      toast.success("Image attached");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function analyze() {
     if (!topic.trim() || Object.values(vals).some(v => !v.trim())) {
@@ -35,6 +58,7 @@ export function ArgumentBuilder() {
           user_id: user.id, topic, ...vals,
           ai_analysis: `${r.result.improvement}`,
           ai_score: r.result.score,
+          image_url: imageUrl,
         });
         const pts = Math.round(r.result.score / 4); // up to ~25 pts
         if (pts > 0) {
@@ -70,6 +94,38 @@ export function ArgumentBuilder() {
             />
           </div>
         ))}
+
+        {user && (
+          <div>
+            <div className="font-arena text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+              📷 Visual Evidence (optional)
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            {imageUrl ? (
+              <div className="relative inline-block">
+                <img src={imageUrl} alt="Evidence" className="max-h-32 rounded-lg border border-border" />
+                <button
+                  onClick={() => setImageUrl(null)}
+                  className="absolute -top-2 -right-2 grid h-6 w-6 place-items-center rounded-full bg-defeat text-defeat-foreground text-xs"
+                >✕</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="rounded-lg border border-dashed border-border bg-background/40 px-3 py-2 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground transition disabled:opacity-50"
+              >
+                {uploading ? "Uploading…" : "📎 Attach image (chart, screenshot)"}
+              </button>
+            )}
+          </div>
+        )}
         <button
           onClick={analyze}
           disabled={loading}
