@@ -61,6 +61,18 @@ export function SiteHeader() {
           <LanguageSwitcher />
           {user && (
             <>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+              <button
+                onClick={() => fileRef.current?.click()}
+                title="Change avatar"
+                className="grid h-9 w-9 place-items-center rounded-full bg-secondary border border-border overflow-hidden hover:border-primary/60 transition"
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-base">{profile?.avatar_emoji ?? "🧑‍🎓"}</span>
+                )}
+              </button>
               <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-gradient-gold px-3 py-1 text-xs font-bold text-ink shadow-card">
                 <span>{rank.emoji}</span>
                 <span>{score} pts</span>
