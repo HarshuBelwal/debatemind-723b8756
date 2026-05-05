@@ -6,6 +6,8 @@ import type { DebateMessage, DebateSide, DebateJudgment } from "@/lib/types";
 import { callAI } from "@/lib/ai-client";
 import { useAuth, awardPoints } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { MicButton } from "./mic-button";
+import { speak, stopSpeaking } from "@/lib/voice";
 
 export function DebateArena() {
   const { user, profile, refreshProfile } = useAuth();
