@@ -23,8 +23,8 @@ export const Route = createFileRoute("/api/stt")({
         }
 
         const form = await request.formData();
-        const file = form.get("audio");
-        if (!(file instanceof File) && !(file instanceof Blob)) {
+        const file = form.get("audio") as Blob | null;
+        if (!file || typeof (file as Blob).arrayBuffer !== "function") {
           return new Response(JSON.stringify({ error: "Missing audio" }), { status: 400 });
         }
 
