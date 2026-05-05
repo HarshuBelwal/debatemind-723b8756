@@ -58,6 +58,7 @@ export function ArgumentBuilder() {
           user_id: user.id, topic, ...vals,
           ai_analysis: `${r.result.improvement}`,
           ai_score: r.result.score,
+          image_url: imageUrl,
         });
         const pts = Math.round(r.result.score / 4); // up to ~25 pts
         if (pts > 0) {
