@@ -220,11 +220,12 @@ export function DebateArena() {
             </div>
 
             <div className="flex gap-2">
+              <MicButton onTranscript={(t) => setInput((v) => (v ? v + " " : "") + t)} />
               <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
-                placeholder="Make your argument… (Enter to send)"
+                placeholder="Make your argument… (🎤 to speak, Enter to send)"
                 rows={2}
                 className="flex-1 resize-none rounded-xl border border-border bg-background/60 px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
                 disabled={loading || judging}
@@ -238,12 +239,21 @@ export function DebateArena() {
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button onClick={counter} disabled={loading} className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-arena/50 transition disabled:opacity-50">🔄 Counter me</button>
               <button onClick={hint} disabled={loading} className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-primary/50 transition disabled:opacity-50">💡 Get a hint</button>
               <button onClick={judge} disabled={judging} className="rounded-md bg-gradient-gold px-3 py-1.5 text-xs font-bold text-ink shadow-card hover:scale-[1.03] transition disabled:opacity-50">
                 {judging ? "Judging…" : "📊 Judge debate"}
               </button>
+              <label className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={autoSpeak}
+                  onChange={(e) => { setAutoSpeak(e.target.checked); if (!e.target.checked) stopSpeaking(); }}
+                  className="accent-arena"
+                />
+                🔊 Auto-speak
+              </label>
             </div>
           </>
         )}
