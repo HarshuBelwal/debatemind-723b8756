@@ -94,6 +94,38 @@ export function ArgumentBuilder() {
             />
           </div>
         ))}
+
+        {user && (
+          <div>
+            <div className="font-arena text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+              📷 Visual Evidence (optional)
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            {imageUrl ? (
+              <div className="relative inline-block">
+                <img src={imageUrl} alt="Evidence" className="max-h-32 rounded-lg border border-border" />
+                <button
+                  onClick={() => setImageUrl(null)}
+                  className="absolute -top-2 -right-2 grid h-6 w-6 place-items-center rounded-full bg-defeat text-defeat-foreground text-xs"
+                >✕</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="rounded-lg border border-dashed border-border bg-background/40 px-3 py-2 text-xs text-muted-foreground hover:border-primary/60 hover:text-foreground transition disabled:opacity-50"
+              >
+                {uploading ? "Uploading…" : "📎 Attach image (chart, screenshot)"}
+              </button>
+            )}
+          </div>
+        )}
         <button
           onClick={analyze}
           disabled={loading}
