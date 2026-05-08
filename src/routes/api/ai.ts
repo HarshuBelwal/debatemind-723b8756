@@ -10,6 +10,7 @@ interface AIBody {
     | "debate_counter"
     | "debate_hint"
     | "debate_judge"
+    | "debate_analyze"
     | "quiz_generate"
     | "argument_analyze"
     | "study_chat";
