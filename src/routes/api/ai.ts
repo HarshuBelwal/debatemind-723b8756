@@ -89,11 +89,22 @@ function buildToolCall(body: AIBody) {
   const lang = langLine(payload);
 
   if (task === "quiz_generate") {
-    const { category, count } = payload as { category: string; count: number };
+    const { category, count, customTopic, sourceText } = payload as {
+      category: string; count: number; customTopic?: string; sourceText?: string;
+    };
+    const n = Math.max(1, Math.min(20, Number(count) || 5));
+    const topic = customTopic?.trim();
+    const source = sourceText?.trim();
+    const subject = topic
+      ? `the user-supplied topic: "${topic}"`
+      : source
+        ? `the following source material (questions MUST be answerable strictly from this text)`
+        : `the "${category}" category`;
+    const sourceBlock = source ? `\n\nSOURCE MATERIAL:\n"""\n${source.slice(0, 12000)}\n"""` : "";
     return {
       messages: [
-        { role: "system", content: `Generate ${count} hard but fair multiple-choice quiz questions in the "${category}" category. 4 choices each, exactly one correct, plus a 1-sentence explanation. Vary difficulty. ${lang} The "question", every entry in "choices", and "explanation" MUST all be written in the requested language.` },
-        { role: "user", content: `Generate ${count} ${category} questions.` },
+        { role: "system", content: `Generate ${n} hard but fair multiple-choice quiz questions about ${subject}. 4 choices each, exactly one correct, plus a 1-sentence explanation. Vary difficulty. ${lang} The "question", every entry in "choices", and "explanation" MUST all be written in the requested language.${sourceBlock}` },
+        { role: "user", content: `Generate ${n} questions.` },
       ],
       tools: [{
         type: "function",
