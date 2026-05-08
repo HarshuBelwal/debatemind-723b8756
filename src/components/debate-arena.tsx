@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { FeatureCard } from "./feature-card";
 import { TOPICS } from "@/lib/topics";
-import type { DebateMessage, DebateSide, DebateJudgment } from "@/lib/types";
+import type { DebateMessage, DebateSide, DebateJudgment, DebateAnalysis, ArgumentScores, FactCheck } from "@/lib/types";
 import { callAI } from "@/lib/ai-client";
 import { useAuth, awardPoints } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,9 @@ export function DebateArena() {
   const [verdict, setVerdict] = useState<DebateJudgment | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const [scores, setScores] = useState<ArgumentScores>({ logic: 50, evidence: 50, emotional: 50, clarity: 50, confidence: 50 });
+  const [factChecks, setFactChecks] = useState<Record<number, FactCheck>>({});
+  const [offTopicCount, setOffTopicCount] = useState(0);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -46,24 +49,53 @@ export function DebateArena() {
     setTranscript([intro]);
     setVerdict(null);
     setStrength(50);
+    setScores({ logic: 50, evidence: 50, emotional: 50, clarity: 50, confidence: 50 });
+    setFactChecks({});
+    setOffTopicCount(0);
   }
 
   async function submit() {
     if (!input.trim() || !topic || !side || loading) return;
     const userMsg: DebateMessage = { role: "user", content: input.trim(), ts: Date.now() };
     const next = [...transcript, userMsg];
+    const userIndex = next.length - 1;
     setTranscript(next);
     setInput("");
     setLoading(true);
     try {
-      const r = await callAI<{ text: string }>("debate_reply", {
+      const replyP = callAI<{ text: string }>("debate_reply", {
         topic, side,
         transcript: next.filter(m => m.role !== "system").map(m => ({ role: m.role, content: m.content })),
       });
+      const analyzeP = callAI<{ result: DebateAnalysis }>("debate_analyze", {
+        topic, side, userArgument: userMsg.content,
+      }).catch(() => null);
+
+      const [r, a] = await Promise.all([replyP, analyzeP]);
+
       setTranscript(t => [...t, { role: "ai", content: r.text, ts: Date.now() }]);
       if (autoSpeak) speak(r.text).catch(() => {});
-      // Drift strength a bit toward middle to keep the user engaged
-      setStrength(s => Math.max(15, Math.min(85, s + (Math.random() * 20 - 8))));
+
+      if (a?.result) {
+        setScores(a.result.scores);
+        setFactChecks(fc => ({ ...fc, [userIndex]: a.result.fact_check }));
+        if (!a.result.on_topic) {
+          const newCount = offTopicCount + 1;
+          setOffTopicCount(newCount);
+          const reason = a.result.off_topic_reason || "Stay focused on the topic.";
+          toast.warning("⚠️ Off-topic", { description: reason });
+          if (autoSpeak) {
+            speak(`Calm down. Let's stay on topic. ${reason}`).catch(() => {});
+          }
+        } else {
+          setOffTopicCount(0);
+        }
+        // Drift overall strength toward the average of logic+evidence+clarity
+        const avg = Math.round((a.result.scores.logic + a.result.scores.evidence + a.result.scores.clarity) / 3);
+        setStrength(avg);
+      } else {
+        setStrength(s => Math.max(15, Math.min(85, s + (Math.random() * 20 - 8))));
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "AI failed");
     } finally {
@@ -187,27 +219,40 @@ export function DebateArena() {
         {side && (
           <>
             <div ref={scrollRef} className="h-72 overflow-y-auto rounded-xl border border-border bg-background/40 p-3 space-y-2.5">
-              {transcript.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                    m.role === "user" ? "bg-primary text-primary-foreground"
-                    : m.role === "ai" ? "bg-card border border-arena/30"
-                    : "bg-secondary text-muted-foreground italic text-xs"
-                  }`}>
-                    {m.role === "ai" && (
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="text-[10px] uppercase tracking-widest text-arena font-arena">🤖 AI</div>
-                        <button
-                          onClick={() => speak(m.content).catch(() => toast.error("Voice failed"))}
-                          className="text-[10px] text-muted-foreground hover:text-arena transition"
-                          title="Listen"
-                        >🔊</button>
-                      </div>
-                    )}
-                    {m.content}
+              {transcript.map((m, i) => {
+                const fc = m.role === "user" ? factChecks[i] : null;
+                return (
+                  <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                      m.role === "user" ? "bg-primary text-primary-foreground"
+                      : m.role === "ai" ? "bg-card border border-arena/30"
+                      : "bg-secondary text-muted-foreground italic text-xs"
+                    }`}>
+                      {m.role === "ai" && (
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="text-[10px] uppercase tracking-widest text-arena font-arena">🤖 AI</div>
+                          <button
+                            onClick={() => speak(m.content).catch(() => toast.error("Voice failed"))}
+                            className="text-[10px] text-muted-foreground hover:text-arena transition"
+                            title="Listen"
+                          >🔊</button>
+                        </div>
+                      )}
+                      {m.content}
+                      {fc && (
+                        <div className={`mt-1.5 rounded-md px-2 py-1 text-[10px] font-bold inline-flex items-center gap-1 ${
+                          fc.status === "verified" ? "bg-victory/30 text-victory-foreground"
+                          : fc.status === "misleading" ? "bg-defeat/30 text-defeat-foreground"
+                          : "bg-secondary text-muted-foreground"
+                        }`} title={fc.note}>
+                          {fc.status === "verified" ? "✅ Verified" : fc.status === "misleading" ? "⚠️ Misleading" : "❔ Unverifiable"}
+                          <span className="font-normal opacity-90">— {fc.note}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {loading && (
                 <div className="flex gap-1 px-3 py-2 text-arena">
                   <span className="h-2 w-2 rounded-full bg-arena animate-bounce" />
@@ -216,20 +261,60 @@ export function DebateArena() {
                 </div>
               )}
               {verdict && (
-                <div className="rounded-xl border border-gold/50 bg-gradient-gold/10 p-3 mt-2">
-                  <div className="font-arena text-[10px] uppercase tracking-widest text-gold">⚖️ Verdict · +{verdict.score_awarded} pts</div>
-                  <div className="mt-1 text-sm">{verdict.verdict}</div>
-                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                <div className="rounded-xl border border-gold/50 bg-gradient-gold/10 p-3 mt-2 space-y-2">
+                  <div className="font-arena text-[10px] uppercase tracking-widest text-gold">
+                    ⚖️ Verdict · Winner: {verdict.winner === "user" ? "🏆 You" : verdict.winner === "ai" ? "🤖 AI" : "🤝 Tie"} · +{verdict.score_awarded} pts
+                  </div>
+                  <div className="text-sm">{verdict.verdict}</div>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
                     {verdict.highlights.map((h, i) => <li key={i}>• {h}</li>)}
                   </ul>
+                  {verdict.strengths && verdict.strengths.length > 0 && (
+                    <div>
+                      <div className="font-arena text-[10px] uppercase tracking-widest text-victory mt-1">💪 Strengths</div>
+                      <ul className="text-xs text-muted-foreground">{verdict.strengths.map((s, i) => <li key={i}>• {s}</li>)}</ul>
+                    </div>
+                  )}
+                  {verdict.weaknesses && verdict.weaknesses.length > 0 && (
+                    <div>
+                      <div className="font-arena text-[10px] uppercase tracking-widest text-defeat mt-1">🩹 Weaknesses</div>
+                      <ul className="text-xs text-muted-foreground">{verdict.weaknesses.map((s, i) => <li key={i}>• {s}</li>)}</ul>
+                    </div>
+                  )}
+                  {verdict.improvements && verdict.improvements.length > 0 && (
+                    <div>
+                      <div className="font-arena text-[10px] uppercase tracking-widest text-primary mt-1">🚀 How to improve</div>
+                      <ul className="text-xs text-muted-foreground">{verdict.improvements.map((s, i) => <li key={i}>• {s}</li>)}</ul>
+                    </div>
+                  )}
                 </div>
               )}
+            </div>
+
+            {/* Live argument scoring */}
+            <div className="rounded-xl border border-border bg-background/40 p-3 space-y-2">
+              <div className="font-arena text-[10px] uppercase tracking-widest text-muted-foreground">⚡ Live Argument Scoring</div>
+              {([
+                { key: "logic", label: "Logic", color: "bg-primary" },
+                { key: "evidence", label: "Evidence", color: "bg-arena" },
+                { key: "emotional", label: "Emotional appeal", color: "bg-devil" },
+                { key: "clarity", label: "Speaking clarity", color: "bg-victory" },
+                { key: "confidence", label: "Confidence", color: "bg-gold" },
+              ] as const).map(row => (
+                <div key={row.key} className="flex items-center gap-2">
+                  <div className="w-28 text-[11px] text-muted-foreground">{row.label}</div>
+                  <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div className={`h-full ${row.color} transition-all duration-500`} style={{ width: `${scores[row.key]}%` }} />
+                  </div>
+                  <div className="w-8 text-right font-arena text-xs font-bold">{scores[row.key]}</div>
+                </div>
+              ))}
             </div>
 
             <div>
               <div className="flex items-center justify-between text-[10px] uppercase tracking-widest font-arena text-muted-foreground mb-1.5">
                 <span>You</span>
-                <span>Argument Strength</span>
+                <span>Argument Strength{offTopicCount > 0 ? ` · ⚠️ off-topic ×${offTopicCount}` : ""}</span>
                 <span>AI</span>
               </div>
               <div className="relative h-2.5 rounded-full bg-secondary overflow-hidden">

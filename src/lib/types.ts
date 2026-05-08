@@ -19,6 +19,30 @@ export interface DebateJudgment {
   ai_strength: number;
   score_awarded: number; // 0-100
   highlights: string[];
+  strengths?: string[];
+  weaknesses?: string[];
+  improvements?: string[];
+  winner?: "user" | "ai" | "tie";
+}
+
+export interface ArgumentScores {
+  logic: number;
+  evidence: number;
+  emotional: number;
+  clarity: number;
+  confidence: number;
+}
+
+export interface FactCheck {
+  status: "verified" | "misleading" | "unverifiable";
+  note: string;
+}
+
+export interface DebateAnalysis {
+  on_topic: boolean;
+  off_topic_reason?: string;
+  scores: ArgumentScores;
+  fact_check: FactCheck;
 }
 
 export interface ArgumentAnalysis {

@@ -11,6 +11,53 @@ const TIMER_SECONDS = 30;
 const POINTS_PER_CORRECT = 15;
 const MAX_SOURCE_CHARS = 12000;
 
+function triggerDownload(filename: string, content: string, mime = "text/plain") {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function safeName(s: string) {
+  return s.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 40) || "quiz";
+}
+
+function downloadQuestions(qs: QuizQuestion[], label: string, withAnswers: boolean) {
+  const lines: string[] = [`# Quiz · ${label}`, `# ${qs.length} questions`, ""];
+  qs.forEach((q, i) => {
+    lines.push(`${i + 1}. ${q.question}`);
+    q.choices.forEach((c, j) => lines.push(`   ${String.fromCharCode(65 + j)}) ${c}`));
+    if (withAnswers) {
+      lines.push(`   ✅ Answer: ${String.fromCharCode(65 + q.correctIndex)} — ${q.choices[q.correctIndex]}`);
+      lines.push(`   💡 ${q.explanation}`);
+    }
+    lines.push("");
+  });
+  triggerDownload(`${safeName(label)}-questions${withAnswers ? "-answers" : ""}.txt`, lines.join("\n"));
+}
+
+function downloadResults(qs: QuizQuestion[], score: number, points: number, label: string) {
+  const lines = [
+    `# Quiz Results · ${label}`,
+    `# ${new Date().toLocaleString()}`,
+    "",
+    `Score: ${score} / ${qs.length}`,
+    `Points earned: +${points}`,
+    "",
+    "--- Answer key ---",
+  ];
+  qs.forEach((q, i) => {
+    lines.push(`${i + 1}. ${q.question}`);
+    lines.push(`   ✅ ${String.fromCharCode(65 + q.correctIndex)}) ${q.choices[q.correctIndex]}`);
+    lines.push(`   💡 ${q.explanation}`);
+    lines.push("");
+  });
+  triggerDownload(`${safeName(label)}-results.txt`, lines.join("\n"));
+}
+
+
 export function QuizBattle() {
   const { user, profile, refreshProfile } = useAuth();
   const [category, setCategory] = useState<QuizCategoryId>("general");
@@ -210,19 +257,21 @@ export function QuizBattle() {
 
         {/* Question count */}
         <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 px-3 py-2">
-          <label htmlFor="qcount" className="text-xs font-medium text-muted-foreground">Number of questions</label>
-          <div className="flex items-center gap-2">
-            <input
-              id="qcount"
-              type="range"
-              min={3}
-              max={15}
-              value={questionCount}
-              onChange={(e) => setQuestionCount(Number(e.target.value))}
-              className="w-32 accent-primary"
-            />
-            <span className="font-arena text-sm font-bold w-6 text-right">{questionCount}</span>
-          </div>
+          <label htmlFor="qcount" className="text-xs font-medium text-muted-foreground">Number of questions (1–20, default 5)</label>
+          <input
+            id="qcount"
+            type="number"
+            min={1}
+            max={20}
+            value={questionCount}
+            onChange={(e) => {
+              const n = parseInt(e.target.value, 10);
+              if (Number.isNaN(n)) return;
+              setQuestionCount(Math.max(1, Math.min(20, n)));
+            }}
+            onBlur={(e) => { if (!e.target.value) setQuestionCount(5); }}
+            className="w-20 rounded-md border border-border bg-background/60 px-2 py-1 text-center font-arena text-sm font-bold focus:outline-none focus:border-primary"
+          />
         </div>
 
         {questions.length === 0 && !loading && (
@@ -294,6 +343,25 @@ export function QuizBattle() {
                   {index + 1 < questions.length ? "Next →" : "Finish"}
                 </button>
               </div>
+            )}
+          </div>
+        )}
+
+        {questions.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => downloadQuestions(questions, mode === "category" ? category : mode === "topic" ? customTopic : (sourceName ?? "source"), false)}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-primary/50 transition"
+            >📥 Download questions</button>
+            <button
+              onClick={() => downloadQuestions(questions, mode === "category" ? category : mode === "topic" ? customTopic : (sourceName ?? "source"), true)}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-primary/50 transition"
+            >📥 Download with answers</button>
+            {done && (
+              <button
+                onClick={() => downloadResults(questions, score, score * POINTS_PER_CORRECT, mode === "category" ? category : mode === "topic" ? customTopic : (sourceName ?? "source"))}
+                className="rounded-md border border-gold/50 bg-gold/10 px-3 py-1.5 text-xs text-gold hover:bg-gold/20 transition"
+              >🏆 Download results</button>
             )}
           </div>
         )}
