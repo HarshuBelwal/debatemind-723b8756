@@ -147,8 +147,8 @@ function buildToolCall(body: AIBody) {
     const convo = transcript.map(m => `${m.role.toUpperCase()}: ${m.content}`).join("\n");
     return {
       messages: [
-        { role: "system", content: `You are an impartial debate judge. Score fairly based on logic, evidence, rhetoric, and rebuttal quality. ${lang} The "verdict" and every "highlights" entry must be written in the requested language.` },
-        { role: "user", content: `Topic: "${topic}"\nUser side: ${side}\n\nTranscript:\n${convo}\n\nJudge this debate.` },
+        { role: "system", content: `You are an impartial debate judge. Score fairly based on logic, evidence, rhetoric, and rebuttal quality. ${lang} The "verdict", every "highlights", "strengths", "weaknesses", and "improvements" entry must be written in the requested language.` },
+        { role: "user", content: `Topic: "${topic}"\nUser side: ${side}\n\nTranscript:\n${convo}\n\nJudge this debate. Pick a winner, explain why, and give the user concrete strengths, weaknesses, and improvement suggestions.` },
       ],
       tools: [{
         type: "function",
@@ -158,18 +158,70 @@ function buildToolCall(body: AIBody) {
           parameters: {
             type: "object",
             properties: {
-              verdict: { type: "string", description: "1-2 sentence verdict." },
+              verdict: { type: "string", description: "1-2 sentence verdict explaining WHY the winner won." },
+              winner: { type: "string", enum: ["user", "ai", "tie"] },
               user_strength: { type: "integer", minimum: 0, maximum: 100 },
               ai_strength: { type: "integer", minimum: 0, maximum: 100 },
               score_awarded: { type: "integer", minimum: 0, maximum: 100, description: "Points earned by the user." },
               highlights: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 4 },
+              strengths: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 4, description: "What the user did well." },
+              weaknesses: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 4, description: "Where the user was weak." },
+              improvements: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 4, description: "Concrete suggestions to improve next time." },
             },
-            required: ["verdict", "user_strength", "ai_strength", "score_awarded", "highlights"],
+            required: ["verdict", "winner", "user_strength", "ai_strength", "score_awarded", "highlights", "strengths", "weaknesses", "improvements"],
             additionalProperties: false,
           },
         },
       }],
       tool_choice: { type: "function", function: { name: "return_judgment" } },
+    };
+  }
+
+  if (task === "debate_analyze") {
+    const { topic, side, userArgument } = payload as { topic: string; side: string; userArgument: string };
+    return {
+      messages: [
+        { role: "system", content: `You are a real-time debate analytics engine. Analyze the user's latest statement on the topic. Decide whether it's on-topic. Score the statement on five dimensions (0-100). Fact-check any factual claim it makes — mark "verified" if confidently true, "misleading" if false/exaggerated/missing context, or "unverifiable" if it's opinion or you can't tell. Be strict but fair. ${lang} Write "off_topic_reason" and "fact_check.note" in the requested language.` },
+        { role: "user", content: `Topic: "${topic}"\nUser side: ${side}\nUser statement: """${userArgument}"""\n\nAnalyze it.` },
+      ],
+      tools: [{
+        type: "function",
+        function: {
+          name: "return_analysis",
+          description: "Return live debate analysis of the user's latest statement.",
+          parameters: {
+            type: "object",
+            properties: {
+              on_topic: { type: "boolean" },
+              off_topic_reason: { type: "string", description: "Empty string if on topic; otherwise a short reason." },
+              scores: {
+                type: "object",
+                properties: {
+                  logic: { type: "integer", minimum: 0, maximum: 100 },
+                  evidence: { type: "integer", minimum: 0, maximum: 100 },
+                  emotional: { type: "integer", minimum: 0, maximum: 100 },
+                  clarity: { type: "integer", minimum: 0, maximum: 100 },
+                  confidence: { type: "integer", minimum: 0, maximum: 100 },
+                },
+                required: ["logic", "evidence", "emotional", "clarity", "confidence"],
+                additionalProperties: false,
+              },
+              fact_check: {
+                type: "object",
+                properties: {
+                  status: { type: "string", enum: ["verified", "misleading", "unverifiable"] },
+                  note: { type: "string", description: "One short sentence explaining the verdict." },
+                },
+                required: ["status", "note"],
+                additionalProperties: false,
+              },
+            },
+            required: ["on_topic", "off_topic_reason", "scores", "fact_check"],
+            additionalProperties: false,
+          },
+        },
+      }],
+      tool_choice: { type: "function", function: { name: "return_analysis" } },
     };
   }
 
