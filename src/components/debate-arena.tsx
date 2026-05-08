@@ -12,6 +12,7 @@ import { speak, stopSpeaking } from "@/lib/voice";
 export function DebateArena() {
   const { user, profile, refreshProfile } = useAuth();
   const [topic, setTopic] = useState<string | null>(null);
+  const [customTopic, setCustomTopic] = useState("");
   const [side, setSide] = useState<DebateSide | null>(null);
   const [transcript, setTranscript] = useState<DebateMessage[]>([]);
   const [input, setInput] = useState("");
@@ -149,6 +150,27 @@ export function DebateArena() {
               🎲 Random
             </button>
           </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const t = customTopic.trim();
+              if (t.length < 5) { toast.info("Topic must be at least 5 characters."); return; }
+              setTopic(t); setSide(null); setTranscript([]); setVerdict(null); setStrength(50);
+              setCustomTopic("");
+            }}
+            className="mt-3 flex gap-2"
+          >
+            <input
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              placeholder="✍️ Or type your own topic…"
+              maxLength={200}
+              className="flex-1 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm focus:outline-none focus:border-primary"
+            />
+            <button type="submit" className="rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground hover:scale-[1.02] transition">
+              Use topic
+            </button>
+          </form>
         </div>
 
         {topic && !side && (
