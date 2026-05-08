@@ -11,6 +11,53 @@ const TIMER_SECONDS = 30;
 const POINTS_PER_CORRECT = 15;
 const MAX_SOURCE_CHARS = 12000;
 
+function triggerDownload(filename: string, content: string, mime = "text/plain") {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function safeName(s: string) {
+  return s.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").slice(0, 40) || "quiz";
+}
+
+function downloadQuestions(qs: QuizQuestion[], label: string, withAnswers: boolean) {
+  const lines: string[] = [`# Quiz · ${label}`, `# ${qs.length} questions`, ""];
+  qs.forEach((q, i) => {
+    lines.push(`${i + 1}. ${q.question}`);
+    q.choices.forEach((c, j) => lines.push(`   ${String.fromCharCode(65 + j)}) ${c}`));
+    if (withAnswers) {
+      lines.push(`   ✅ Answer: ${String.fromCharCode(65 + q.correctIndex)} — ${q.choices[q.correctIndex]}`);
+      lines.push(`   💡 ${q.explanation}`);
+    }
+    lines.push("");
+  });
+  triggerDownload(`${safeName(label)}-questions${withAnswers ? "-answers" : ""}.txt`, lines.join("\n"));
+}
+
+function downloadResults(qs: QuizQuestion[], score: number, points: number, label: string) {
+  const lines = [
+    `# Quiz Results · ${label}`,
+    `# ${new Date().toLocaleString()}`,
+    "",
+    `Score: ${score} / ${qs.length}`,
+    `Points earned: +${points}`,
+    "",
+    "--- Answer key ---",
+  ];
+  qs.forEach((q, i) => {
+    lines.push(`${i + 1}. ${q.question}`);
+    lines.push(`   ✅ ${String.fromCharCode(65 + q.correctIndex)}) ${q.choices[q.correctIndex]}`);
+    lines.push(`   💡 ${q.explanation}`);
+    lines.push("");
+  });
+  triggerDownload(`${safeName(label)}-results.txt`, lines.join("\n"));
+}
+
+
 export function QuizBattle() {
   const { user, profile, refreshProfile } = useAuth();
   const [category, setCategory] = useState<QuizCategoryId>("general");
