@@ -210,19 +210,21 @@ export function QuizBattle() {
 
         {/* Question count */}
         <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 px-3 py-2">
-          <label htmlFor="qcount" className="text-xs font-medium text-muted-foreground">Number of questions</label>
-          <div className="flex items-center gap-2">
-            <input
-              id="qcount"
-              type="range"
-              min={3}
-              max={15}
-              value={questionCount}
-              onChange={(e) => setQuestionCount(Number(e.target.value))}
-              className="w-32 accent-primary"
-            />
-            <span className="font-arena text-sm font-bold w-6 text-right">{questionCount}</span>
-          </div>
+          <label htmlFor="qcount" className="text-xs font-medium text-muted-foreground">Number of questions (1–20, default 5)</label>
+          <input
+            id="qcount"
+            type="number"
+            min={1}
+            max={20}
+            value={questionCount}
+            onChange={(e) => {
+              const n = parseInt(e.target.value, 10);
+              if (Number.isNaN(n)) return;
+              setQuestionCount(Math.max(1, Math.min(20, n)));
+            }}
+            onBlur={(e) => { if (!e.target.value) setQuestionCount(5); }}
+            className="w-20 rounded-md border border-border bg-background/60 px-2 py-1 text-center font-arena text-sm font-bold focus:outline-none focus:border-primary"
+          />
         </div>
 
         {questions.length === 0 && !loading && (
