@@ -50,6 +50,14 @@ export function QuizBattle() {
   }
 
   async function start() {
+    if (mode === "topic" && customTopic.trim().length < 3) {
+      toast.error("Enter a topic (at least 3 characters).");
+      return;
+    }
+    if (mode === "source" && sourceText.trim().length < 50) {
+      toast.error("Provide at least 50 characters of source text.");
+      return;
+    }
     setLoading(true);
     setDone(false);
     setScore(0);
@@ -57,13 +65,33 @@ export function QuizBattle() {
     setChosen(null);
     try {
       const r = await callAI<{ result: { questions: QuizQuestion[] } }>("quiz_generate", {
-        category, count: QUESTIONS_PER_ROUND,
+        category,
+        count: questionCount,
+        ...(mode === "topic" ? { customTopic: customTopic.trim() } : {}),
+        ...(mode === "source" ? { sourceText: sourceText.slice(0, MAX_SOURCE_CHARS) } : {}),
       });
       setQuestions(r.result.questions);
       startTimer();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "AI failed");
     } finally { setLoading(false); }
+  }
+
+  async function handleFile(file: File) {
+    if (!file) return;
+    const isText = file.type.startsWith("text/") || /\.(txt|md|csv|json)$/i.test(file.name);
+    if (!isText) {
+      toast.error("Only plain text files (.txt, .md, .csv, .json) are supported. Paste from PDFs/Docs.");
+      return;
+    }
+    if (file.size > 1_000_000) {
+      toast.error("File too large (max 1 MB).");
+      return;
+    }
+    const text = await file.text();
+    setSourceText(text.slice(0, MAX_SOURCE_CHARS));
+    setSourceName(file.name);
+    setMode("source");
   }
 
   function pick(i: number) {
@@ -85,7 +113,9 @@ export function QuizBattle() {
       const points = score * POINTS_PER_CORRECT;
       if (user && profile) {
         await supabase.from("quiz_attempts").insert({
-          user_id: user.id, category, correct: score, total: questions.length, score_awarded: points,
+          user_id: user.id,
+          category: mode === "category" ? category : mode === "topic" ? `topic:${customTopic.trim().slice(0, 60)}` : `source:${sourceName ?? "pasted"}`,
+          correct: score, total: questions.length, score_awarded: points,
         });
         if (points > 0) {
           await awardPoints(user.id, points, profile.total_score, profile.current_streak);
