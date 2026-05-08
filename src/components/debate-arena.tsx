@@ -12,6 +12,7 @@ import { speak, stopSpeaking } from "@/lib/voice";
 export function DebateArena() {
   const { user, profile, refreshProfile } = useAuth();
   const [topic, setTopic] = useState<string | null>(null);
+  const [customTopic, setCustomTopic] = useState("");
   const [side, setSide] = useState<DebateSide | null>(null);
   const [transcript, setTranscript] = useState<DebateMessage[]>([]);
   const [input, setInput] = useState("");
