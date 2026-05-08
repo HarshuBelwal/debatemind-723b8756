@@ -8,8 +8,8 @@ import { useAuth, awardPoints } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 
 const TIMER_SECONDS = 30;
-const QUESTIONS_PER_ROUND = 5;
 const POINTS_PER_CORRECT = 15;
+const MAX_SOURCE_CHARS = 12000;
 
 export function QuizBattle() {
   const { user, profile, refreshProfile } = useAuth();
