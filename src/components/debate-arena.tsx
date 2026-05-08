@@ -22,6 +22,9 @@ export function DebateArena() {
   const [verdict, setVerdict] = useState<DebateJudgment | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [autoSpeak, setAutoSpeak] = useState(false);
+  const [scores, setScores] = useState<ArgumentScores>({ logic: 50, evidence: 50, emotional: 50, clarity: 50, confidence: 50 });
+  const [factChecks, setFactChecks] = useState<Record<number, FactCheck>>({});
+  const [offTopicCount, setOffTopicCount] = useState(0);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
