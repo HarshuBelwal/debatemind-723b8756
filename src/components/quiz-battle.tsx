@@ -300,6 +300,25 @@ export function QuizBattle() {
           </div>
         )}
 
+        {questions.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => downloadQuestions(questions, mode === "category" ? category : mode === "topic" ? customTopic : (sourceName ?? "source"), false)}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-primary/50 transition"
+            >📥 Download questions</button>
+            <button
+              onClick={() => downloadQuestions(questions, mode === "category" ? category : mode === "topic" ? customTopic : (sourceName ?? "source"), true)}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs hover:border-primary/50 transition"
+            >📥 Download with answers</button>
+            {done && (
+              <button
+                onClick={() => downloadResults(questions, score, score * POINTS_PER_CORRECT, mode === "category" ? category : mode === "topic" ? customTopic : (sourceName ?? "source"))}
+                className="rounded-md border border-gold/50 bg-gold/10 px-3 py-1.5 text-xs text-gold hover:bg-gold/20 transition"
+              >🏆 Download results</button>
+            )}
+          </div>
+        )}
+
         {done && (
           <div className="rounded-xl border border-gold/40 bg-gradient-gold/10 p-6 text-center">
             <div className="text-4xl mb-2">🏆</div>
