@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { FeatureCard } from "./feature-card";
 import { TOPICS } from "@/lib/topics";
-import type { DebateMessage, DebateSide, DebateJudgment } from "@/lib/types";
+import type { DebateMessage, DebateSide, DebateJudgment, DebateAnalysis, ArgumentScores, FactCheck } from "@/lib/types";
 import { callAI } from "@/lib/ai-client";
 import { useAuth, awardPoints } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
