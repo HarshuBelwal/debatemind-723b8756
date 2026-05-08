@@ -49,6 +49,9 @@ export function DebateArena() {
     setTranscript([intro]);
     setVerdict(null);
     setStrength(50);
+    setScores({ logic: 50, evidence: 50, emotional: 50, clarity: 50, confidence: 50 });
+    setFactChecks({});
+    setOffTopicCount(0);
   }
 
   async function submit() {
