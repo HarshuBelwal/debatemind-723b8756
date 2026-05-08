@@ -14,6 +14,11 @@ const MAX_SOURCE_CHARS = 12000;
 export function QuizBattle() {
   const { user, profile, refreshProfile } = useAuth();
   const [category, setCategory] = useState<QuizCategoryId>("general");
+  const [customTopic, setCustomTopic] = useState("");
+  const [sourceText, setSourceText] = useState("");
+  const [sourceName, setSourceName] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState(5);
+  const [mode, setMode] = useState<"category" | "topic" | "source">("category");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
