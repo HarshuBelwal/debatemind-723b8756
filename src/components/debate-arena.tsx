@@ -55,18 +55,44 @@ export function DebateArena() {
     if (!input.trim() || !topic || !side || loading) return;
     const userMsg: DebateMessage = { role: "user", content: input.trim(), ts: Date.now() };
     const next = [...transcript, userMsg];
+    const userIndex = next.length - 1;
     setTranscript(next);
     setInput("");
     setLoading(true);
     try {
-      const r = await callAI<{ text: string }>("debate_reply", {
+      const replyP = callAI<{ text: string }>("debate_reply", {
         topic, side,
         transcript: next.filter(m => m.role !== "system").map(m => ({ role: m.role, content: m.content })),
       });
+      const analyzeP = callAI<{ result: DebateAnalysis }>("debate_analyze", {
+        topic, side, userArgument: userMsg.content,
+      }).catch(() => null);
+
+      const [r, a] = await Promise.all([replyP, analyzeP]);
+
       setTranscript(t => [...t, { role: "ai", content: r.text, ts: Date.now() }]);
       if (autoSpeak) speak(r.text).catch(() => {});
-      // Drift strength a bit toward middle to keep the user engaged
-      setStrength(s => Math.max(15, Math.min(85, s + (Math.random() * 20 - 8))));
+
+      if (a?.result) {
+        setScores(a.result.scores);
+        setFactChecks(fc => ({ ...fc, [userIndex]: a.result.fact_check }));
+        if (!a.result.on_topic) {
+          const newCount = offTopicCount + 1;
+          setOffTopicCount(newCount);
+          const reason = a.result.off_topic_reason || "Stay focused on the topic.";
+          toast.warning("⚠️ Off-topic", { description: reason });
+          if (autoSpeak) {
+            speak(`Calm down. Let's stay on topic. ${reason}`).catch(() => {});
+          }
+        } else {
+          setOffTopicCount(0);
+        }
+        // Drift overall strength toward the average of logic+evidence+clarity
+        const avg = Math.round((a.result.scores.logic + a.result.scores.evidence + a.result.scores.clarity) / 3);
+        setStrength(avg);
+      } else {
+        setStrength(s => Math.max(15, Math.min(85, s + (Math.random() * 20 - 8))));
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "AI failed");
     } finally {
